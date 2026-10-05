@@ -1,0 +1,27 @@
+@tailwind base;@tailwind components;@tailwind utilities;
+body{@apply font-sans text-ink antialiased;background-color:#FFF8EC;background-image:radial-gradient(900px 420px at 85% -80px,rgba(217,72,15,.08),transparent),radial-gradient(700px 360px at -10% 0,rgba(255,183,3,.16),transparent);background-repeat:no-repeat}
+h1,h2,h3{letter-spacing:-.015em}
+::selection{background:rgba(217,72,15,.2)}
+:focus-visible{outline:3px solid #D9480F;outline-offset:2px}
+html{scroll-behavior:smooth}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes popIn{0%{transform:scale(.92);opacity:.4}60%{transform:scale(1.03)}100%{transform:scale(1);opacity:1}}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.anim-in{animation:fadeUp .4s ease-out both}
+.pop{display:inline-block;animation:popIn .35s ease-out both}
+.grow{transform-origin:left;animation:grow .8s cubic-bezier(.2,.8,.2,1) both}
+.stagger>*:nth-child(2){animation-delay:.06s}.stagger>*:nth-child(3){animation-delay:.12s}
+.stagger>*:nth-child(4){animation-delay:.18s}.stagger>*:nth-child(5){animation-delay:.24s}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+@keyframes catBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes catBlink{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+@keyframes catTail{0%,100%{transform:rotate(0)}50%{transform:rotate(12deg)}}
+@keyframes catHop{0%{transform:translateY(0) scale(1)}40%{transform:translateY(-14px) scale(1.06,.96)}70%{transform:translateY(0) scale(.96,1.05)}100%{transform:none}}
+@keyframes bubbleFloat{0%,100%{transform:translateY(0);opacity:.95}50%{transform:translateY(-6px);opacity:.5}}
+.cat-bob{animation:catBob 3.2s ease-in-out infinite}
+.cat-hop{animation:catHop .5s ease-out}
+.cat-eye{transform-box:fill-box;transform-origin:center;animation:catBlink 5s infinite}
+.cat-tail{transform-origin:76px 82px;animation:catTail 2.4s ease-in-out infinite}
+.cat-bubble{animation:bubbleFloat 3.6s ease-in-out infinite}
+@keyframes confettiFall{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(105vh) rotate(560deg)}}
+.confetti{position:absolute;top:-16px;width:9px;height:14px;border-radius:2px;animation:confettiFall 2s ease-in forwards}

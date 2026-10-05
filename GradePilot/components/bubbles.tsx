@@ -1,0 +1,90 @@
+"use client";
+import { useEffect, useState } from "react";
+
+const TIPS = [
+  "Check your scores after every quiz while it is still fresh.",
+  "Study the heaviest-weighted exam first. Points add up there.",
+  "Teach a topic out loud. If you can explain it, you know it.",
+  "Short sessions with breaks beat one long cram.",
+  "Write down the questions you missed and why.",
+  "Review the night before, then sleep. Memory sets while you rest.",
+  "Start with the hardest topic while your mind is fresh.",
+  "Keep your scores updated here so the numbers stay honest.",
+];
+export type BubblesMood = "normal" | "cheer";
+/** Lets any screen make Bubbles say something (and look happy). */
+export function bubblesSay(message: string, mood: BubblesMood = "normal") {
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("bubbles-say", { detail: { message, mood } }));
+}
+const MSGS = [
+  "You don't need perfect. You need prepared.",
+  "A plan turns worry into a to-do list.",
+  "Small steps still count. One quiz at a time.",
+  "Know your numbers, then trust your work.",
+  "Every question you review is one you won't miss.",
+  "Progress beats panic. You're already doing the right thing.",
+  "Rest is part of studying. Sleep before the exam!",
+  "Even a few points better on one quiz moves the needle.",
+  "Celebrate what you've already finished.",
+  "Hard semester? Take it one assessment at a time.",
+  "Asking for help early is a strength, not a weakness.",
+  "You've got this. Let's check the math together.",
+  "Take a stretch and a sip of water. Then back to it!",
+  "Consistency is quieter than cramming, and it wins.",
+];
+const KEY = "gradepilot-bubbles-hidden";
+
+function CatArt({ mood = "normal" }: { mood?: BubblesMood }) {
+  const ink = "#2B1B12", cream = "#ECEEF2", pink = "#FFB4A2", spot = "#232834";
+  return <svg viewBox="0 0 100 100" className="h-full w-full" role="img" aria-label="Bubbles, the Butlog cat">
+    {[[10, 28, 4.5, "0s"], [90, 20, 3.5, "1.2s"], [7, 58, 3, "2.2s"], [93, 48, 2.5, "0.6s"]].map(([x, y, r, d], k) =>
+      <g key={k} className="cat-bubble" style={{ animationDelay: d as string }}><circle cx={x as number} cy={y as number} r={r as number} fill="rgba(244,162,97,.18)" stroke="#F4A261" strokeWidth="1.5" /><circle cx={(x as number) - (r as number) / 3} cy={(y as number) - (r as number) / 3} r={(r as number) / 4} fill="#fff" /></g>)}
+    <ellipse cx="50" cy="96" rx="24" ry="3" fill="rgba(43,27,18,.12)" />
+    <g className="cat-tail"><path d="M76 82 Q98 82 90 56" stroke={ink} strokeWidth="11" fill="none" strokeLinecap="round" /><path d="M76 82 Q98 82 90 56" stroke={cream} strokeWidth="6" fill="none" strokeLinecap="round" /><path d="M92 65.4 Q91.6 60 90 56" stroke={spot} strokeWidth="6" fill="none" strokeLinecap="round" /></g>
+    <defs><clipPath id="cat-head"><ellipse cx="50" cy="45" rx="33" ry="28" /></clipPath><clipPath id="cat-body"><ellipse cx="50" cy="74" rx="26" ry="19" /></clipPath></defs>
+    <ellipse cx="50" cy="74" rx="26" ry="19" fill={cream} stroke={ink} strokeWidth="3" />
+    <g clipPath="url(#cat-body)" fill={spot}><ellipse cx="33" cy="82" rx="8" ry="6" /><ellipse cx="69" cy="70" rx="7" ry="9" /><ellipse cx="54" cy="88" rx="5" ry="3.5" /></g>
+    <ellipse cx="38" cy="91" rx="8" ry="4.5" fill={cream} stroke={ink} strokeWidth="2.5" /><ellipse cx="62" cy="91" rx="8" ry="4.5" fill={cream} stroke={ink} strokeWidth="2.5" />
+    <path d="M20 38 L22 8 L45 22 Z" fill={cream} stroke={ink} strokeWidth="3" strokeLinejoin="round" /><path d="M26 31 L27 16 L38 23 Z" fill={pink} />
+    <path d="M80 38 L78 8 L55 22 Z" fill={spot} stroke={ink} strokeWidth="3" strokeLinejoin="round" /><path d="M74 31 L73 16 L62 23 Z" fill={pink} />
+    <ellipse cx="50" cy="45" rx="33" ry="28" fill={cream} stroke={ink} strokeWidth="3" />
+    <g clipPath="url(#cat-head)" fill={spot}><ellipse cx="73" cy="28" rx="13" ry="10" /><ellipse cx="29" cy="21" rx="7" ry="5" /><ellipse cx="51" cy="17" rx="3.4" ry="4" /></g>
+    {mood === "cheer" ? <path d="M31 49 Q37 41 43 49 M57 49 Q63 41 69 49" stroke={ink} strokeWidth="3.2" fill="none" strokeLinecap="round" /> : <g className="cat-eye"><ellipse cx="37" cy="47" rx="5.2" ry="6.4" fill={ink} /><ellipse cx="63" cy="47" rx="5.2" ry="6.4" fill={ink} />
+      <circle cx="38.8" cy="44.6" r="1.9" fill="#fff" /><circle cx="64.8" cy="44.6" r="1.9" fill="#fff" /></g>}
+    <circle cx="27" cy="57" r="4.2" fill={pink} opacity=".7" /><circle cx="73" cy="57" r="4.2" fill={pink} opacity=".7" />
+    <path d="M47 54 L53 54 L50 58 Z" fill="#FF8FA3" stroke={ink} strokeWidth="1.5" strokeLinejoin="round" />
+    <path d="M50 58 L50 60 M50 60 Q45 65 41 61 M50 60 Q55 65 59 61" stroke={ink} strokeWidth="2.3" fill="none" strokeLinecap="round" />
+    {mood === "cheer" && <path d="M44 62 Q50 71 56 62 Z" fill="#FF8FA3" stroke={ink} strokeWidth="1.8" strokeLinejoin="round" />}
+    <path d="M29 55 L13 52 M29 59 L13 62 M71 55 L87 52 M71 59 L87 62" stroke={ink} strokeWidth="1.8" strokeLinecap="round" />
+    <path d="M32 68 Q50 77 68 68" stroke="#D9480F" strokeWidth="5" fill="none" strokeLinecap="round" />
+    <circle cx="50" cy="75" r="3.6" fill="#FFC24A" stroke={ink} strokeWidth="2" />
+  </svg>;
+}
+
+/** Bubbles: an original Butlog cat that shows rotating encouragement in a screen corner. */
+export function Bubbles() {
+  const [ready, setReady] = useState(false);
+  const [open, setOpen] = useState(true);
+  const [i, setI] = useState(-1);
+  const [hop, setHop] = useState(0);
+  const [say, setSay] = useState<{ message: string; mood: BubblesMood } | null>(null);
+  const next = () => setI((x) => (x + 1 + Math.floor(Math.random() * 3)) % MSGS.length);
+  useEffect(() => { try { if (localStorage.getItem(KEY) === "1") setOpen(false); } catch {} setReady(true); }, []);
+  useEffect(() => { if (!open) return; const t = setInterval(next, 14000); return () => clearInterval(t); }, [open]);
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout>;
+    const h = (e: Event) => { const d = (e as CustomEvent).detail; setSay({ message: d.message, mood: d.mood }); setHop((x) => x + 1); clearTimeout(t); t = setTimeout(() => setSay(null), 12000); };
+    window.addEventListener("bubbles-say", h); return () => { window.removeEventListener("bubbles-say", h); clearTimeout(t); };
+  }, []);
+  const setHidden = (h: boolean) => { setOpen(!h); try { localStorage.setItem(KEY, h ? "1" : "0"); } catch {} };
+  if (!ready) return null;
+  const intro = `Meow! I'm Bubbles. Tip of the day: ${TIPS[Math.floor(Date.now() / 864e5) % TIPS.length]}`;
+  const msg = say?.message ?? (i < 0 ? intro : MSGS[i]);
+  return <div className="pointer-events-none fixed bottom-2 right-2 z-20 flex max-w-[calc(100vw-1rem)] flex-col items-end sm:bottom-4 sm:right-4 print:hidden">
+    {open && <div key={msg} className="pointer-events-auto anim-in mb-1 mr-2 max-w-[16rem] rounded-2xl rounded-br-md border border-slategray/20 bg-white px-4 py-3 text-sm shadow-lg">
+      <p className="font-medium text-ink">{msg}</p>
+      <div className="mt-1.5 flex gap-4 text-xs font-semibold text-brand-dark"><button onClick={next}>Another one</button><button onClick={() => setHidden(true)}>Hide</button></div></div>}
+    <button onClick={() => { if (!open) setHidden(false); else next(); setHop((h) => h + 1); }} aria-label={open ? "Show another message from Bubbles" : "Show Bubbles the cat"}
+      className="pointer-events-auto cat-bob h-20 w-20 sm:h-24 sm:w-24"><span key={hop} className={`block h-full w-full ${hop ? "cat-hop" : ""}`}><CatArt mood={say?.mood ?? "normal"} /></span></button>
+  </div>;
+}
