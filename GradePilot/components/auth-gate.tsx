@@ -37,7 +37,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       <h2 className="mb-2 font-serif text-2xl">{mode === "login" ? "Log in" : "Sign up"}</h2>
       <label className="text-sm">Email<Input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} /></label>
       <label className="mt-2 block text-sm">Password<Input type="password" minLength={6} autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} onChange={(e) => setPassword(e.target.value)} /></label>
-      {msg && <p role="status" className={`my-2 rounded-lg px-3 py-2 text-sm ${msg.k === "ok" ? "bg-green-100 text-green-900" : "bg-red-100 text-red-900"}`}>{msg.t}</p>}
+      {msg && <p role="status" className={`my-2 rounded-lg px-3 py-2 text-sm ${msg.k === "ok" ? "bg-green-100 dark:bg-green-950 text-green-900 dark:text-green-200" : "bg-red-100 dark:bg-red-950 text-red-900 dark:text-red-200"}`}>{msg.t}</p>}
       <div className="mt-3 flex gap-2">
         <Button variant="primary" disabled={busy || !email || password.length < 6} onClick={submit}>{mode === "login" ? "Log in" : "Create account"}</Button>
         <Button onClick={() => { setMode(mode === "login" ? "signup" : "login"); setMsg(null); }}>{mode === "login" ? "Need an account?" : "Have an account?"}</Button></div>

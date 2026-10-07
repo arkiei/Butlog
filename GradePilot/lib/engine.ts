@@ -1,8 +1,9 @@
 // Pure grade engine: no React, no DOM.
-export type Component = { id: string; aid?: string; n: string; w: string; s: string; t: string; d?: string };
+export type Category = { id: string; name: string; sec: "lec" | "lab"; w: string; custom?: boolean };
+export type Component = { id: string; cat?: string; aid?: string; n: string; w: string; s: string; t: string; d?: string };
 export type Conv = Record<string, string>;
 export type CustomRow = { id: string; label: string; min: string; points: string };
-export type Subject = { id: string; name: string; code: string; units: number; instr: string; sem: string; target: string; sample?: boolean; conv: Conv; comps: Component[]; system?: string; custom?: CustomRow[] };
+export type Subject = { id: string; name: string; code: string; units: number; lec?: number; lab?: number; instr: string; sem: string; target: string; sample?: boolean; conv: Conv; comps: Component[]; system?: string; custom?: CustomRow[]; cats?: Category[]; lw?: string; bw?: string };
 export const num = (v: unknown): number | null => { if (v == null) return null; const x = typeof v === "string" ? v.trim() : v; return x === "" || isNaN(Number(x)) ? null : Number(x); };
 /** A score was typed but cannot be used: negative, no/zero total, or above the total. */
 export const isInvalid = (c: Component) => { const sc = num(c.s), t = num(c.t); return sc !== null && (sc < 0 || t === null || t <= 0 || sc > t); };

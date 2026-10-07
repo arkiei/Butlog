@@ -6,15 +6,21 @@ import { Card } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/input";
 import { GradingSetup } from "@/components/grading-setup";
 import * as G from "@/lib/grading-systems";
+import * as S from "@/lib/sections";
+import { GradingEditor, FinalWeighting } from "@/components/grading-editor";
 import * as I from "@/lib/insights";
 import { Confetti } from "@/components/confetti";
+import { EggCrack, EggIcon } from "@/components/egg";
+import { CountUp } from "@/components/count-up";
 import { bubblesSay } from "@/components/bubbles";
 import { uid } from "@/lib/utils";
+import * as U from "@/lib/units";
+import { UnitsFields } from "@/components/units-fields";
 import * as E from "@/lib/engine";
 import type { Subject, Component } from "@/lib/engine";
 
 const f = (n: number | null, d = 2) => (n == null || !isFinite(n) ? "–" : n.toFixed(d));
-const tone = { ok: "bg-green-100 text-green-900", warn: "bg-amber-100 text-amber-900", bad: "bg-red-100 text-red-900" };
+const tone = { ok: "bg-green-100 dark:bg-green-950 text-green-900 dark:text-green-200", warn: "bg-amber-100 dark:bg-amber-950 text-amber-900 dark:text-amber-200", bad: "bg-red-100 dark:bg-red-950 text-red-900 dark:text-red-200" };
 const Note = ({ k, children }: { k: keyof typeof tone; children: React.ReactNode }) => <p className={`my-2 rounded-lg px-3 py-2 ${tone[k]}`}>{children}</p>;
 
 function Misses({ c, pct }: { c: Component; pct: number }) {
@@ -27,7 +33,8 @@ function Misses({ c, pct }: { c: Component; pct: number }) {
 }
 
 export function SubjectDetail({ s, onChange, onBack }: { s: Subject; onChange: (s: Subject) => void; onBack: () => void }) {
-  const cs = s.comps, tw = E.totalWeight(cs), wOK = Math.abs(tw - 100) < 1e-9;
+  const cs = S.eff(s), errs = S.validate(s), tw = E.totalWeight(cs), wOK = errs.length === 0;
+  const bothSecs = S.activeSecs(s).length === 2;
   const rem = cs.filter((c) => !E.isDone(c)), earned = E.earnedPoints(cs), rw = E.calculateRemainingWeight(cs);
   const scale = G.scaleOf(s), conv = G.thresholdsOf(s);
   const m = E.num(conv[s.target]);
@@ -36,6 +43,9 @@ export function SubjectDetail({ s, onChange, onBack }: { s: Subject; onChange: (
   const secured = reqAll !== null && reqAll <= 1e-9;
   const dated = rem.filter((c) => c.d).map((c) => ({ c, days: I.daysUntil(c.d as string) })).sort((a, b) => a.days - b.days);
   const soon = dated.find((x) => x.days >= 0);
+  const zeros = cs.filter((c) => E.isDone(c) && Number(c.s) === 0).length;
+  const prevZeros = useRef(zeros);
+  useEffect(() => { if (zeros > prevZeros.current) bubblesSay("That one's an itlog. The next one will be better.", "calm"); prevZeros.current = zeros; }, [zeros]);
   const [burst, setBurst] = useState(0);
   const wasSecured = useRef(secured);
   useEffect(() => { if (secured && !wasSecured.current) setBurst((b) => b + 1); wasSecured.current = secured; }, [secured]);
@@ -44,9 +54,9 @@ export function SubjectDetail({ s, onChange, onBack }: { s: Subject; onChange: (
       if (!wOK || m === null) return;
       if (soon && soon.days <= 3) { bubblesSay(`${soon.c.n} is ${I.countdown(soon.days).toLowerCase()}. Time for a quick review!`); return; }
       if (reqAll === null) return;
-      if (secured) bubblesSay(`A ${s.target} is secured. Nice work!`, "cheer");
-      else if (reqAll > 100 + 1e-9) bubblesSay(`A ${s.target} is out of reach now, but a lower target may still work. Check the Compare tab.`);
-      else if (reqAll > 85) bubblesSay(`It's a stretch: about ${f(reqAll)}% on what's left. Let's make a plan.`);
+      if (secured) bubblesSay(`A ${s.target} is secured. Nice work!`, "dance");
+      else if (reqAll > 100 + 1e-9) bubblesSay(`A ${s.target} is out of reach now, but a lower target may still work. Check the Compare tab.`, "calm");
+      else if (reqAll > 85) bubblesSay(`It's a stretch: about ${f(reqAll)}% on what's left. Let's make a plan.`, "calm");
       else bubblesSay(`About ${f(reqAll)}% on what's left gets you a ${s.target}. You can do this.`);
     }, 700);
     return () => clearTimeout(t);
@@ -54,12 +64,13 @@ export function SubjectDetail({ s, onChange, onBack }: { s: Subject; onChange: (
   }, [s.id, s.target, wOK, m, Math.round((reqAll ?? -1) * 10), soon?.days]);
   const [wi, setWi] = useState<Record<string, number>>({});
   const [cip, setCip] = useState<string | null>(null);
+  const [ul, setUl] = useState(String(U.lecOf(s)));
+  const [ub, setUb] = useState(U.labOf(s) ? String(U.labOf(s)) : "");
   const [tab, setTab] = useState<"plan" | "explore" | "compare" | "setup">("plan");
   const sec = (k: string) => (tab === k ? "" : "hidden");
   const tabs = [["plan", "Plan"], ["explore", "What-if"], ["compare", "Compare"], ["setup", "Setup"]] as const;
   const [cv, setCv] = useState({ id: "", t: "60", k: "48" });
   const set = (p: Partial<Subject>) => onChange({ ...s, ...p });
-  const setC = (id: string, p: Partial<Component>) => set({ comps: cs.map((c) => (c.id === id ? { ...c, ...p } : c)) });
   const pct = (c: Component) => wi[c.id] ?? 75;
   const proj = E.calculateProjectedStanding(cs, Object.fromEntries(rem.map((c) => [c.id, pct(c)])));
   const cvC = rem.find((c) => c.id === cv.id) ?? rem[0];
@@ -73,8 +84,8 @@ export function SubjectDetail({ s, onChange, onBack }: { s: Subject; onChange: (
     return <>
       <p className="text-sm text-slategray">Needed final course standing for {s.target}: {f(m)}%. Earned so far: {f(earned)} of {f(E.completedWeight(cs), 0)} points from completed work.</p>
       {req <= 1e-9 && <Note k="ok">You have already secured the required course standing for this target, assuming your completed grades are accurate.</Note>}
-      {req > 100 + 1e-9 && <Note k="bad">Your selected target cannot be reached with the remaining assessment weight. You would need an average of {f(req)}% on the remaining work.</Note>}
-      {req <= 100 + 1e-9 && rem.length === 1 && <><p>Required {rem[0].n} score:</p><div key={`${s.target}-${req}`} className="pop font-serif text-4xl font-bold">{f(Math.max(0, req))}%</div>
+      {req > 100 + 1e-9 && <Note k="warn"><EggIcon cracked className="mr-1.5 inline h-5 w-5 align-text-bottom" />Your selected target cannot be reached with the remaining assessment weight. You would need an average of {f(req)}% on the remaining work.</Note>}
+      {req <= 100 + 1e-9 && rem.length === 1 && <><p>Required {rem[0].n} score:</p><div className="font-serif text-4xl font-bold tabular-nums"><CountUp value={Math.max(0, req)} suffix="%" /></div>
         {Math.abs(req - 100) < 1e-9 && <Note k="warn">This requires a perfect score.</Note>}<Misses c={rem[0]} pct={Math.max(0, req)} /></>}
       {req > 1e-9 && req <= 100 + 1e-9 && rem.length > 1 && <>
         <p>Average needed across remaining assessments: <b>{f(req)}%</b>. Scenarios:</p>
@@ -93,26 +104,35 @@ export function SubjectDetail({ s, onChange, onBack }: { s: Subject; onChange: (
   return <>
     <button onClick={onBack} className="mb-1 text-sm font-medium text-brand-dark">← All subjects</button>
     <h2 className="text-center font-serif text-3xl">{s.name}</h2>
-    <p className="mb-3 text-center text-sm text-slategray">{s.code} · {s.units} units · {s.sem} · Target <b>{s.target}</b> · {G.SYSTEMS.find((x) => x.id === G.sysId(s))?.name}</p>
-    <div role="tablist" className="sticky top-14 z-[5] mx-auto mb-4 grid max-w-xl grid-cols-4 gap-1 rounded-xl bg-slategray/15 p-1">
+    <p className="mb-3 text-center text-sm text-slategray">{s.code} · {U.unitsText(s)} · {s.sem} · Target <b>{s.target}</b> · {G.SYSTEMS.find((x) => x.id === G.sysId(s))?.name}</p>
+    <div role="tablist" className="sticky top-14 z-[5] mx-auto mb-4 grid max-w-xl grid-cols-4 gap-1 rounded-xl border border-slategray/20 bg-card p-1 shadow-sm">
       {tabs.map(([k, l]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
-        className={`min-h-11 rounded-lg text-sm font-semibold transition-colors ${tab === k ? "bg-brand text-white shadow" : "text-slategray"}`}>{l}</button>)}</div>
-    {(!wOK || m === null) && tab !== "setup" && <div className="mb-4 flex items-center justify-between gap-2 rounded-xl border-2 border-yolk bg-yolk/10 p-3 text-sm text-stone-900">
-      <span>{!wOK ? "Weights must total 100%." : `Enter the conversion for ${s.target}.`} Finish setup to see your results.</span>
+        className={`min-h-11 rounded-lg text-sm font-semibold transition-colors ${tab === k ? "bg-brand text-onbrand shadow" : "text-slategray"}`}>{l}</button>)}</div>
+    {(!wOK || m === null) && tab !== "setup" && <div className="mb-4 flex items-center justify-between gap-2 rounded-xl border-2 border-yolk bg-tint p-3 text-sm text-ink">
+      <span>{!wOK ? "Your grading setup is not complete." : `Enter the conversion for ${s.target}.`} Finish setup to see your results.</span>
       <Button size="sm" onClick={() => setTab("setup")}>Go to Setup</Button></div>}
     {badC.length > 0 && <Note k="bad">Invalid score in {badC.map((c) => c.n).join(", ")}: it must be between 0 and the &quot;Out of&quot; value. It is ignored in the results until fixed (see Setup).</Note>}
     <div className="stagger grid items-start gap-x-4 lg:grid-cols-2">
     <Card className={sec("plan") + " lg:col-span-2"}><div className="grid grid-cols-3 gap-3">
-      {[["Current standing", `${f(E.calculateWeightedStanding(cs))}%`, "of completed work"], ["Remaining weight", `${f(rw, 0)}%`, ""], ["Maximum possible", `${f(E.calculateMaximumPossibleStanding(cs))}%`, ""]].map(([a, b, c]) =>
-        <div key={a} className="rounded-xl bg-brand/5 p-3"><div className="text-xs text-slategray">{a}</div><div className="font-serif text-xl font-bold tabular-nums text-brand-dark sm:text-2xl">{b}</div><div className="text-xs text-slategray">{c}</div></div>)}
+      {([["Current standing", E.calculateWeightedStanding(cs), 2, "of completed work"], ["Remaining weight", rw, 0, ""], ["Maximum possible", E.calculateMaximumPossibleStanding(cs), 2, ""]] as [string, number | null, number, string][]).map(([a, b, dec, c]) =>
+        <div key={a} className="rounded-xl bg-brand/5 p-3"><div className="text-xs text-slategray">{a}</div><div className="font-serif text-xl font-bold tabular-nums text-brand-dark sm:text-2xl"><CountUp value={b} decimals={dec} suffix="%" /></div><div className="text-xs text-slategray">{c}</div></div>)}
     </div>
       <div className="mt-3" aria-hidden="true"><div className="relative h-3 overflow-hidden rounded-full bg-slategray/15">
         <div className="grow absolute inset-y-0 left-0 bg-yolk/40" style={{ width: `${Math.min(100, earned + rw)}%` }} />
         <div className="grow absolute inset-y-0 left-0 bg-brand" style={{ width: `${Math.min(100, earned)}%` }} />
-        {m !== null && <div className="absolute inset-y-0 w-0.5 bg-stone-900" style={{ left: `${Math.min(100, m)}%` }} />}</div>
+        {m !== null && <div className="absolute inset-y-0 w-0.5 bg-ink" style={{ left: `${Math.min(100, m)}%` }} />}</div>
         <div className="mt-1 flex justify-between text-[11px] text-slategray"><span>Earned {f(earned)}</span><span>Max {f(E.calculateMaximumPossibleStanding(cs))}</span>{m !== null && <span>Target {f(m)}</span>}</div></div>
       <p className="mt-2 text-sm text-slategray">Total weight: {f(tw, 0)}% {wOK && "✓"}</p>
-      {!wOK && <Note k="bad">Your grading components currently total {f(tw)}%. {tw < 100 ? `Add another ${f(100 - tw)}%` : `Remove ${f(tw - 100)}%`} before calculating your final grade.</Note>}</Card>
+      {!wOK && <Note k="bad">{errs.map((e) => <span key={e} className="block">{e}</span>)}</Note>}</Card>
+
+    {bothSecs && wOK && (() => {
+      const L = S.sectionStats(s, "lec"), B = S.sectionStats(s, "lab"), sh = S.shares(s)!, fin = E.calculateWeightedStanding(cs), fg = fin == null ? null : G.gradeFor(s, fin);
+      const tile = (label: string, v: number | null, hint: string) => <div className="rounded-xl bg-brand/5 p-3"><div className="text-xs text-slategray">{label}</div>
+        <div className="font-serif text-xl font-bold tabular-nums text-brand-dark sm:text-2xl"><CountUp value={v} suffix="%" /></div><div className="text-xs text-slategray">{hint}</div></div>;
+      return <Card className={sec("plan") + " lg:col-span-2"}><div className="grid grid-cols-3 gap-3">
+        {tile("Lecture grade", L.cur, `max ${f(L.max)}%`)}{tile("Laboratory grade", B.cur, `max ${f(B.max)}%`)}{tile("Final subject grade", fin, fg ? `so far · ${fg}` : "so far")}</div>
+        <p className="mt-2 text-xs text-slategray">Final grade = Lecture {f(sh.lec, 0)}% + Laboratory {f(sh.lab, 0)}%, using the weighting from your syllabus. It counts completed work only.</p></Card>;
+    })()}
 
     <Card className={sec("plan")}><h3 className="mb-2 font-serif text-xl">Target grade</h3>
       <Select value={s.target} onChange={(e) => set({ target: e.target.value })}>{scale.targets.map((g) => <option key={g.label} value={g.label}>{g.label}{g.desc ? ` - ${g.desc}` : ""}</option>)}</Select>{need()}</Card>
@@ -159,26 +179,26 @@ export function SubjectDetail({ s, onChange, onBack }: { s: Subject; onChange: (
           <label>Exam total<Input type="number" min={1} value={cv.t} onChange={(e) => setCv({ ...cv, t: e.target.value })} /></label>
           <label>Expected correct<Input type="number" min={0} value={cv.k} onChange={(e) => setCv({ ...cv, k: e.target.value })} /></label></div>
         {!(cvT > 0) || cvK < 0 || cvK > cvT ? <Note k="bad">Correct answers must be between 0 and the exam total.</Note> :
-          <p aria-live="polite"><b>{cvK}/{cvT} = {f((cvK / cvT) * 100)}%</b><br />Contribution to course: {f((cvK / cvT) * Number(cvC.w))} of {cvC.w} points</p>}</>}</Card>
+          <p aria-live="polite"><b>{cvK}/{cvT} = {f((cvK / cvT) * 100)}%</b>{cvK === 0 && <EggIcon className="egg-wobble ml-1 inline h-4 w-4" />}<br />Contribution to course: {f((cvK / cvT) * Number(cvC.w))} of {cvC.w} points</p>}</>}</Card>
 
     <Card className={sec("compare")}><h3 className="mb-2 font-serif text-xl">Grade history</h3>
       {!hist.length ? <p className="text-sm text-slategray">Record scores to see your performance.</p> :
         <div role="img" aria-label="Score percentage by component" className="h-56"><ResponsiveContainer><BarChart data={hist}><XAxis dataKey="n" tick={{ fontSize: 11 }} /><YAxis domain={[0, 100]} width={30} tick={{ fontSize: 11 }} />
-          <Bar dataKey="p" fill="#D9480F"><LabelList dataKey="p" position="top" formatter={(v: number) => `${v.toFixed(0)}%`} fontSize={11} /></Bar></BarChart></ResponsiveContainer></div>}</Card>
+          <Bar dataKey="p" fill="#D9480F"><LabelList dataKey="p" content={(q: any) => q.value === 0 ? <g transform={`translate(${q.x + q.width / 2 - 8},${q.y - 20})`}><path d="M8 1 C5 1 3 6 3 9.5 C3 12.5 5.2 15 8 15 C10.8 15 13 12.5 13 9.5 C13 6 11 1 8 1 Z" fill="#FFF8EC" stroke="#A63A0A" strokeWidth="1.2" /></g> : <text x={q.x + q.width / 2} y={q.y - 6} textAnchor="middle" fontSize={11} fill="currentColor">{`${Number(q.value).toFixed(0)}%`}</text>} /></Bar></BarChart></ResponsiveContainer></div>}</Card>
 
-    <Card className={sec("setup") + " lg:col-span-2"}><h3 className="mb-2 font-serif text-xl">Grading components</h3>
-      {cs.map((c) => { const bad = E.isInvalid(c); const p = E.isDone(c) ? E.calculatePercentage(Number(c.s), Number(c.t)) : null;
-        return <div key={c.id} className="mb-3 border-b pb-2"><div className="grid grid-cols-4 gap-1 sm:grid-cols-[1fr_72px_80px_80px_auto]">
-          <Input className="col-span-4 sm:col-span-1" aria-label="Name" value={c.n} onChange={(e) => setC(c.id, { n: e.target.value })} />
-          <Input aria-label="Weight %" type="number" min={0} value={c.w} onChange={(e) => setC(c.id, { w: e.target.value })} />
-          <Input aria-label="Score" type="number" min={0} placeholder="left" value={c.s} onChange={(e) => setC(c.id, { s: e.target.value })} />
-          <Input aria-label="Out of" type="number" min={0} value={c.t} onChange={(e) => setC(c.id, { t: e.target.value })} />
-          <Button size="sm" aria-label="Remove" onClick={() => set({ comps: cs.filter((x) => x.id !== c.id) })}>✕</Button></div>
-          <p className="text-xs text-slategray">{bad ? <span className="text-red-700">Score must be between 0 and {c.t || "the Out of value"}. It is ignored until fixed.</span> : p != null ? `${c.s}/${c.t} = ${f(p)}%` : "Remaining · “Out of” = number of items (used for question counts)"}</p><label className="mt-1 flex items-center gap-2 text-xs text-slategray">Exam or due date<Input type="date" className="max-w-[11rem]" value={c.d ?? ""} onChange={(e) => setC(c.id, { d: e.target.value })} /></label></div>; })}
-      <Button size="sm" onClick={() => set({ comps: [...cs, { id: uid(), aid: uid(), n: "New component", w: "0", s: "", t: "" }] })}>Add component</Button></Card>
+    <Card className={sec("setup") + " lg:col-span-2"}><h3 className="mb-2 font-serif text-xl">Units</h3>
+      <UnitsFields lec={ul} lab={ub} onChange={(l, b) => { setUl(l); setUb(b); onChange(U.withUnits(s, E.num(l) ?? 0, E.num(b) ?? 0)); }} /></Card>
+
+    {bothSecs && <Card className={sec("setup") + " lg:col-span-2"}><h3 className="mb-1 font-serif text-xl">Final grade weighting</h3>
+      <FinalWeighting s={s} onChange={onChange} /></Card>}
+
+    <Card className={sec("setup") + " lg:col-span-2"}><h3 className="mb-1 font-serif text-xl">Grading categories and assessments</h3>
+      <p className="mb-3 text-sm text-slategray">Add the categories your teacher uses (Exams, Quizzes...). A category&apos;s percentage is split equally between its assessments unless you customize it.</p>
+      <GradingEditor s={s} onChange={onChange} mode="all" withScores /></Card>
 
     <Card className={sec("setup") + " order-first lg:col-span-2"}><GradingSetup s={s} onChange={onChange} /></Card>
     </div>
     <Confetti burst={burst} />
+    <EggCrack burst={burst} />
   </>;
 }

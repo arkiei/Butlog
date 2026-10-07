@@ -17,8 +17,9 @@ export const metadata: Metadata = {
   openGraph: { title: "Butlog", description: "Know what you need before your next exam.", type: "website", siteName: "Butlog" },
 };
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#D9480F" };
+const themeScript = `try{var p=localStorage.getItem("butlog-theme");if(p==="dark"||(p!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.classList.add("dark")}catch(e){}`;
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="en" className={`${display.variable} ${bodyFont.variable}`}><body>
+  return <html lang="en" suppressHydrationWarning className={`${display.variable} ${bodyFont.variable}`}><head><script dangerouslySetInnerHTML={{ __html: themeScript }} /></head><body>
     <AuthProvider><AuthGate>{children}<Bubbles /></AuthGate></AuthProvider>
     <footer className="mx-auto max-w-5xl px-4 pb-24 pt-2 text-center text-xs text-slategray">Butlog is an independent student-made grade planning tool. It is not affiliated with, endorsed by, or officially associated with any university.</footer>
   </body></html>;

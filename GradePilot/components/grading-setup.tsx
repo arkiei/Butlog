@@ -26,7 +26,7 @@ export function GradingSetup({ s, onChange }: { s: Subject; onChange: (s: Subjec
   const templateUi = id === "msu" ? <div className="mt-3">
     <label className="text-sm text-slategray">Starting conversion
       <Select value={isTpl ? "template" : ""} onChange={(e) => pickTemplate(e.target.value)}><option value="">Enter my own</option><option value="template">Common template (75% = 3.00)</option></Select></label>
-    {isTpl && <p className="mt-2 rounded-lg bg-yolk/10 px-3 py-2 text-sm">This is a common template, not an official MSU-IIT table. Many instructors use their own, so check your syllabus and edit any box below.</p>}
+    {isTpl && <p className="mt-2 rounded-lg border border-yolk/40 bg-tint px-3 py-2 text-sm">This is a common template, not an official MSU-IIT table. Many instructors use their own, so check your syllabus and edit any box below.</p>}
   </div> : null;
   return <>
     <h3 className="mb-2 font-serif text-xl">Grading system</h3>
@@ -35,8 +35,8 @@ export function GradingSetup({ s, onChange }: { s: Subject; onChange: (s: Subjec
     {id === "msu" && <p className="mt-2 text-xs text-slategray">Using the MSU 1.00–5.00 grading scale.</p>}
     {id === "percent" && <p className="mt-3 text-sm text-slategray">Your target is the final percentage itself, so there is nothing else to set up.</p>}
     {(id === "msu" || id === "gpa4") && <>
-      {templateUi}<p className="mt-3 rounded-lg bg-yolk/10 px-3 py-2 text-sm">Your instructor&apos;s grading formula may differ. Enter the conversion used in your course. Each box is the minimum course standing (%) for that grade{scale.failLabel ? `; below the lowest minimum is ${scale.failLabel}` : ""}.{id === "gpa4" && " Prefilled with common values: edit them to match your school."}</p>
-      {s.sample && <p className="mt-2 rounded-lg bg-red-100 px-3 py-2 text-sm text-red-900">These are SAMPLE numbers for the demo only. They are not an official conversion.</p>}
+      {templateUi}<p className="mt-3 rounded-lg border border-yolk/40 bg-tint px-3 py-2 text-sm">Your instructor&apos;s grading formula may differ. Enter the conversion used in your course. Each box is the minimum course standing (%) for that grade{scale.failLabel ? `; below the lowest minimum is ${scale.failLabel}` : ""}.{id === "gpa4" && " Prefilled with common values: edit them to match your school."}</p>
+      {s.sample && <p className="mt-2 rounded-lg bg-red-100 dark:bg-red-950 px-3 py-2 text-sm text-red-900 dark:text-red-200">These are SAMPLE numbers for the demo only. They are not an official conversion.</p>}
       <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">{scale.targets.map((t) => <label key={t.label} className="text-xs text-slategray">{t.label}{t.desc ? ` ${t.desc}` : ""}
         <Input type="number" step="0.01" value={s.conv?.[t.label] ?? ""} onChange={(e) => onChange({ ...s, conv: { ...s.conv, [t.label]: e.target.value }, sample: false })} /></label>)}</div>
       {id === "msu" && <p className="mt-2 text-xs text-slategray">5.00 Failure · INC Incomplete · Drp Dropped are not computed here.</p>}
@@ -50,7 +50,7 @@ export function GradingSetup({ s, onChange }: { s: Subject; onChange: (s: Subjec
         <Input aria-label="Grade points" type="number" min={0} step="0.01" value={r.points} onChange={(e) => setRow(r.id, { points: e.target.value })} />
         <Button size="sm" aria-label="Remove grade" onClick={() => apply({ ...s, custom: rows.filter((x) => x.id !== r.id) })}>Remove</Button></div>)}
       <Button size="sm" className="mt-1" onClick={() => onChange({ ...s, custom: [...rows, { id: `r${Date.now()}`, label: "", min: "", points: "" }] })}>Add grade</Button>
-      {errs.length > 0 && <ul role="alert" className="mt-3 list-disc rounded-lg bg-red-100 py-2 pl-7 pr-3 text-sm text-red-900">{errs.map((e) => <li key={e}>{e}</li>)}</ul>}
+      {errs.length > 0 && <ul role="alert" className="mt-3 list-disc rounded-lg bg-red-100 dark:bg-red-950 py-2 pl-7 pr-3 text-sm text-red-900 dark:text-red-200">{errs.map((e) => <li key={e}>{e}</li>)}</ul>}
     </>}
   </>;
 }
