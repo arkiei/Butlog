@@ -82,7 +82,6 @@ export default function Page() {
       <h1 className="font-serif text-4xl font-extrabold tracking-tight sm:text-6xl text-white">Butlog</h1>
       <p className="mt-2 text-xl font-medium text-amber-200">Know what you need before your next exam.</p>
       <p className="mx-auto mt-3 max-w-xl text-white/80">Plan your grades, calculate required exam scores, and see whether your target grade is still achievable.</p>
-        <p className="mt-2 text-sm italic text-white/60">Because nobody wants a 0 that looks like an itlog.</p>
       <div className="my-4 flex justify-center gap-2"><Button variant="yolk" onClick={() => setView("new")}>Start Planning</Button>
         <Button className="border-white/40 text-white hover:bg-white/10" onClick={() => { const s = demoSubjects(); setD({ ...d, subjects: [...d.subjects, ...s] }); setView(s[0].id); }}>Try Demo</Button></div>
       </div></div>
