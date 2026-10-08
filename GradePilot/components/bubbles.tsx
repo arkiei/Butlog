@@ -36,9 +36,9 @@ const MSGS = [
 ];
 const KEY = "gradepilot-bubbles-hidden";
 
-function CatArt({ mood = "normal" }: { mood?: BubblesMood }) {
+export function CatBody({ mood = "normal" }: { mood?: BubblesMood }) {
   const ink = "#2B1B12", cream = "#ECEEF2", pink = "#FFB4A2", spot = "#232834";
-  return <svg viewBox="0 0 100 100" className="h-full w-full" role="img" aria-label="Bubbles, the Butlog cat">
+  return <>
     {[[10, 28, 4.5, "0s"], [90, 20, 3.5, "1.2s"], [7, 58, 3, "2.2s"], [93, 48, 2.5, "0.6s"]].map(([x, y, r, d], k) =>
       <g key={k} className="cat-bubble" style={{ animationDelay: d as string }}><circle cx={x as number} cy={y as number} r={r as number} fill="rgba(244,162,97,.18)" stroke="#F4A261" strokeWidth="1.5" /><circle cx={(x as number) - (r as number) / 3} cy={(y as number) - (r as number) / 3} r={(r as number) / 4} fill="#fff" /></g>)}
     <ellipse cx="50" cy="96" rx="24" ry="3" fill="rgba(43,27,18,.12)" />
@@ -63,7 +63,11 @@ function CatArt({ mood = "normal" }: { mood?: BubblesMood }) {
     <path d="M29 55 L13 52 M29 59 L13 62 M71 55 L87 52 M71 59 L87 62" stroke={ink} strokeWidth="1.8" strokeLinecap="round" />
     <path d="M32 68 Q50 77 68 68" stroke="#D9480F" strokeWidth="5" fill="none" strokeLinecap="round" />
     <circle cx="50" cy="75" r="3.6" fill="#FFC24A" stroke={ink} strokeWidth="2" />
-  </svg>;
+  </>;
+}
+
+function CatArt({ mood = "normal" }: { mood?: BubblesMood }) {
+  return <svg viewBox="0 0 100 100" className="h-full w-full" role="img" aria-label="Bubbles, the Butlog cat"><CatBody mood={mood} /></svg>;
 }
 
 type Mode = "focus" | "short" | "long";

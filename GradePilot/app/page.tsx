@@ -14,6 +14,10 @@ import * as U from "@/lib/units";
 import * as S from "@/lib/sections";
 import { SubjectWizard } from "@/components/subject-wizard";
 import { CountUp } from "@/components/count-up";
+import { CalendarExport } from "@/components/calendar-export";
+import { ShareSemester } from "@/components/share-card";
+import { calendarItems } from "@/lib/ics";
+import { InstallApp, InstallBanner, InstallButton } from "@/components/install-app";
 import { UnitsFields } from "@/components/units-fields";
 import { uid } from "@/lib/utils";
 import { demoSubjects } from "@/lib/demo";
@@ -36,13 +40,14 @@ const subjGrade = (s: Subject) => !S.ok(s) ? null : G.gradeFor(s, E.calculateWei
 
 function SaveBadge({ status, onRetry }: { status: SaveStatus; onRetry: () => void }) {
   // Transient and out of the layout flow: appears briefly after a save, then fades. Errors stay until resolved.
-  const [msg, setMsg] = useState<"saving" | "saved" | "error">("saving");
+  const [msg, setMsg] = useState<"saving" | "saved" | "error" | "offline">("saving");
   const [visible, setVisible] = useState(false);
   const prev = useRef(status);
   useEffect(() => {
     let t: ReturnType<typeof setTimeout> | undefined;
     if (status === "saving") { setMsg("saving"); setVisible(true); }
     else if (status === "error") { setMsg("error"); setVisible(true); }
+    else if (status === "offline") { setMsg("offline"); setVisible(true); }
     else if (status === "saved" && prev.current === "saving") { setMsg("saved"); setVisible(true); t = setTimeout(() => setVisible(false), 1800); }
     else setVisible(false);
     prev.current = status;
@@ -51,7 +56,7 @@ function SaveBadge({ status, onRetry }: { status: SaveStatus; onRetry: () => voi
   return <div role="status" aria-live="polite" aria-hidden={!visible}
     className={`fixed right-3 top-[62px] z-10 flex items-center gap-1.5 rounded-full border border-slategray/20 bg-card px-3 py-1 text-xs shadow-sm transition-opacity duration-300 ${visible ? "opacity-100" : "pointer-events-none opacity-0"} ${msg === "error" ? "text-danger" : "text-slategray"}`}>
     {msg === "saved" && <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5" /></svg>}
-    <span>{msg === "saving" ? "Saving…" : msg === "saved" ? "Saved" : "Couldn't save"}</span>
+    <span>{msg === "saving" ? "Saving…" : msg === "saved" ? "Saved" : msg === "offline" ? "Offline. Changes are kept on this device." : "Couldn't save"}</span>
     {msg === "error" && <button onClick={onRetry} className="font-semibold underline">Retry</button>}
   </div>;
 }
@@ -77,7 +82,7 @@ export default function Page() {
     if (view === "home") return <section className="py-4 text-center"><div className="anim-in relative mb-6 overflow-hidden rounded-3xl bg-hero ring-1 ring-white/10 px-6 py-14 text-white sm:py-16">
         <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-brand/50 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-16 h-60 w-60 rounded-full bg-yolk/25 blur-3xl" />
-        <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 800 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M-20 270 C 160 270, 240 70, 420 100 S 700 210, 830 40" fill="none" stroke="rgba(255,255,255,.22)" strokeWidth="2" strokeDasharray="2 10" strokeLinecap="round" /><circle cx="420" cy="100" r="5" fill="#FFB703" /></svg>
+        <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 800 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M-20 270 C 160 270, 240 70, 420 100 S 700 210, 830 40" fill="none" stroke="rgba(255,255,255,.22)" strokeWidth="2" strokeDasharray="2 10" strokeLinecap="round" /><circle cx="420" cy="100" r="5" style={{ fill: "rgb(var(--c-yolk))" }} /></svg>
         <div className="relative">
       <h1 className="font-serif text-4xl font-extrabold tracking-tight sm:text-6xl text-white">Butlog</h1>
       <p className="mt-2 text-xl font-medium text-amber-200">Know what you need before your next exam.</p>
@@ -98,6 +103,7 @@ export default function Page() {
     const gpa = ok ? E.calculateGPA(graded.map((x, i) => ({ grade: pts[i] as number, units: x.s.units }))) : null;
     const units = d.subjects.reduce((a, s) => a + s.units, 0), attn = d.subjects.filter((s) => dashStatus(s)[1] !== "ok").length;
     const upcoming = d.subjects.flatMap((s) => S.eff(s).filter((c) => !E.isDone(c) && c.d).map((c) => ({ s, c, days: I.daysUntil(c.d as string) }))).filter((x) => x.days >= -1).sort((a, b) => a.days - b.days).slice(0, 5);
+    const calItems = calendarItems(d.subjects);
     const pu = E.num(d.prior.units), pg = E.num(d.prior.gpa);
     const cum = gpa != null && pu && pu > 0 && pg !== null ? (gpa * units + pg * pu) / (units + pu) : null;
     return <>
@@ -110,6 +116,7 @@ export default function Page() {
       {upcoming.length > 0 && <Card><h3 className="mb-2 font-serif text-xl">Coming up</h3><ul className="space-y-2">{upcoming.map(({ s, c, days }) => { const r = I.requiredAvg(s);
         return <li key={c.id} className="flex items-center justify-between gap-2 text-sm"><span><b>{c.n}</b> <span className="text-slategray">{s.name}</span></span>
           <span className="text-right"><span className="font-semibold">{I.countdown(days)}</span>{r !== null && <span className="block text-xs text-slategray">{r <= 1e-9 ? "target secured" : r > 100 + 1e-9 ? "target out of reach" : `need about ${f(r)}% avg`}</span>}</span></li>; })}</ul></Card>}
+      {calItems.length > 0 && <Card><h3 className="mb-1 font-serif text-xl">Calendar</h3><p className="mb-2 text-sm text-slategray">Add your exam and due dates to your phone or computer calendar.</p><CalendarExport items={calItems} /></Card>}
       <Card><h3 className="font-serif text-xl">Semester summary</h3>
         <p>Subjects: <b>{d.subjects.length}</b> · Total units: <b>{units}</b> · Needing attention: <b>{attn}</b></p>
         <p>Semester GPA (current estimates): <b>{gpa != null ? <CountUp value={gpa} /> : "not available"}</b></p>
@@ -118,16 +125,19 @@ export default function Page() {
         <div className="grid grid-cols-2 gap-2 text-sm"><label>Prior units completed<Input type="number" value={d.prior.units} onChange={(e) => setD({ ...d, prior: { ...d.prior, units: e.target.value } })} /></label>
           <label>Prior cumulative GPA<Input type="number" step="0.01" value={d.prior.gpa} onChange={(e) => setD({ ...d, prior: { ...d.prior, gpa: e.target.value } })} /></label></div>
         <p>Cumulative GPA: <b>{cum != null ? f(cum) : "not available"}</b></p></Card>
-      <Button variant="primary" onClick={() => setView("new")}>Add subject</Button></>;
+      <div className="flex flex-wrap gap-2"><Button variant="primary" onClick={() => setView("new")}>Add subject</Button>
+        <ShareSemester rows={graded.map(({ s, g }) => { const [label, tone] = dashStatus(s); return { name: s.name, grade: g, target: s.target, status: label, ok: tone === "ok" }; })} summary={{ subjects: d.subjects.length, units, attention: attn, gpa }} /></div></>;
   };
   const nav = (v: string, label: string, on: boolean) => <button onClick={() => setView(v)} aria-current={on ? "page" : undefined}
     className={`min-h-10 rounded-full px-3 text-sm font-semibold transition-colors sm:px-3 ${on ? "bg-brand text-onbrand" : "text-slategray hover:bg-brand/10"}`}>{label}</button>;
   return <>
     <header className="sticky top-0 z-10 border-b border-slategray/20 bg-card text-ink shadow-sm"><div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-1.5">
       <button className="flex items-center gap-2 font-serif text-base font-bold text-ink sm:text-lg" onClick={() => setView("home")}><Logo className="h-7 w-7" />Butlog</button>
-      <div className="flex items-center gap-1 sm:gap-2"><nav className="flex gap-1">{nav("list", "Semester", view === "list" || !!cur)}{nav("new", "+ Subject", view === "new")}</nav><AccountMenu /></div></div></header>
+      <div className="flex items-center gap-1 sm:gap-2"><nav className="flex gap-1">{nav("list", "Semester", view === "list" || !!cur)}{nav("new", "+ Subject", view === "new")}</nav><InstallButton /><AccountMenu /></div></div></header>
+    <InstallApp />
     <SaveBadge status={status} onRetry={retry} />
     <main className="mx-auto max-w-5xl px-4 pb-16 pt-4">
+      <InstallBanner />
       {legacy && <Card className="border-brand/40"><p className="text-sm">We found {legacy.subjects.length} subject{legacy.subjects.length === 1 ? "" : "s"} saved in this browser from before accounts. Add them to your account?</p>
         <div className="mt-2 flex gap-2"><Button size="sm" variant="primary" onClick={importLegacy}>Import to my account</Button><Button size="sm" onClick={discardLegacy}>Discard</Button></div></Card>}
       {body()}</main></>;

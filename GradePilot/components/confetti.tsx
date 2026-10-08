@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-const COLORS = ["#D9480F", "#FFB703", "#FFC24A", "#E63946", "#FFE8A3"];
+const COLORS = ["rgb(var(--c-brand))", "rgb(var(--c-yolk))", "#FFC24A", "#E63946", "#FFE8A3"];
 function Burst() {
   const [on, setOn] = useState(true);
   useEffect(() => { const t = setTimeout(() => setOn(false), 3600); return () => clearTimeout(t); }, []);

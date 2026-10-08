@@ -7,9 +7,12 @@ import { Input, Select } from "@/components/ui/input";
 import { GradingSetup } from "@/components/grading-setup";
 import * as G from "@/lib/grading-systems";
 import * as S from "@/lib/sections";
+import { useThemeColor } from "@/lib/theme";
 import { GradingEditor, FinalWeighting } from "@/components/grading-editor";
 import * as I from "@/lib/insights";
 import { Confetti } from "@/components/confetti";
+import { CalendarExport } from "@/components/calendar-export";
+import { calendarItems } from "@/lib/ics";
 import { EggCrack, EggIcon } from "@/components/egg";
 import { CountUp } from "@/components/count-up";
 import { bubblesSay } from "@/components/bubbles";
@@ -35,6 +38,7 @@ function Misses({ c, pct }: { c: Component; pct: number }) {
 export function SubjectDetail({ s, onChange, onBack }: { s: Subject; onChange: (s: Subject) => void; onBack: () => void }) {
   const cs = S.eff(s), errs = S.validate(s), tw = E.totalWeight(cs), wOK = errs.length === 0;
   const bothSecs = S.activeSecs(s).length === 2;
+  const brandCss = useThemeColor("--c-brand");
   const rem = cs.filter((c) => !E.isDone(c)), earned = E.earnedPoints(cs), rw = E.calculateRemainingWeight(cs);
   const scale = G.scaleOf(s), conv = G.thresholdsOf(s);
   const m = E.num(conv[s.target]);
@@ -154,7 +158,7 @@ export function SubjectDetail({ s, onChange, onBack }: { s: Subject; onChange: (
             {ins.atAvg != null && <p>At your current average on the rest, you would finish near <b>{f(ins.atAvg)}%</b>{g(ins.atAvg) ? <> (<b>{g(ins.atAvg)}</b>)</> : null}.{ins.cushion != null && ` That is ${f(Math.abs(ins.cushion))} points ${ins.cushion >= 0 ? "above" : "below"} your ${s.target} target.`}</p>}
             <p>Worst case (0% on everything left): <b>{f(ins.worst)}%</b>{g(ins.worst) ? <> (<b>{g(ins.worst)}</b>)</> : null}.</p></div>
           {dated.length > 0 && <div className="mt-4"><p className="text-sm font-semibold">Coming up</p>
-            <ul className="text-sm">{dated.map(({ c, days }) => <li key={c.id} className="flex justify-between"><span>{c.n}</span><span className="text-slategray">{I.countdown(days)}</span></li>)}</ul></div>}
+            <ul className="text-sm">{dated.map(({ c, days }) => <li key={c.id} className="flex justify-between"><span>{c.n}</span><span className="text-slategray">{I.countdown(days)}</span></li>)}</ul><CalendarExport items={calendarItems([s])} compact /></div>}
         </>;
       })()}</Card>
 
@@ -184,7 +188,7 @@ export function SubjectDetail({ s, onChange, onBack }: { s: Subject; onChange: (
     <Card className={sec("compare")}><h3 className="mb-2 font-serif text-xl">Grade history</h3>
       {!hist.length ? <p className="text-sm text-slategray">Record scores to see your performance.</p> :
         <div role="img" aria-label="Score percentage by component" className="h-56"><ResponsiveContainer><BarChart data={hist}><XAxis dataKey="n" tick={{ fontSize: 11 }} /><YAxis domain={[0, 100]} width={30} tick={{ fontSize: 11 }} />
-          <Bar dataKey="p" fill="#D9480F"><LabelList dataKey="p" content={(q: any) => q.value === 0 ? <g transform={`translate(${q.x + q.width / 2 - 8},${q.y - 20})`}><path d="M8 1 C5 1 3 6 3 9.5 C3 12.5 5.2 15 8 15 C10.8 15 13 12.5 13 9.5 C13 6 11 1 8 1 Z" fill="#FFF8EC" stroke="#A63A0A" strokeWidth="1.2" /></g> : <text x={q.x + q.width / 2} y={q.y - 6} textAnchor="middle" fontSize={11} fill="currentColor">{`${Number(q.value).toFixed(0)}%`}</text>} /></Bar></BarChart></ResponsiveContainer></div>}</Card>
+          <Bar dataKey="p" fill={brandCss}><LabelList dataKey="p" content={(q: any) => q.value === 0 ? <g transform={`translate(${q.x + q.width / 2 - 8},${q.y - 20})`}><path d="M8 1 C5 1 3 6 3 9.5 C3 12.5 5.2 15 8 15 C10.8 15 13 12.5 13 9.5 C13 6 11 1 8 1 Z" fill="#FFF8EC" stroke="#A63A0A" strokeWidth="1.2" /></g> : <text x={q.x + q.width / 2} y={q.y - 6} textAnchor="middle" fontSize={11} fill="currentColor">{`${Number(q.value).toFixed(0)}%`}</text>} /></Bar></BarChart></ResponsiveContainer></div>}</Card>
 
     <Card className={sec("setup") + " lg:col-span-2"}><h3 className="mb-2 font-serif text-xl">Units</h3>
       <UnitsFields lec={ul} lab={ub} onChange={(l, b) => { setUl(l); setUb(b); onChange(U.withUnits(s, E.num(l) ?? 0, E.num(b) ?? 0)); }} /></Card>

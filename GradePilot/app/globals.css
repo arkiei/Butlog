@@ -1,11 +1,17 @@
 @tailwind base;@tailwind components;@tailwind utilities;
-:root{--c-brand:204 67 13;--c-brand-dark:166 58 10;--c-yolk:255 183 3;--c-muted:107 91 82;--c-ink:43 27 18;--c-card:255 255 255;--c-page:255 248 236;--c-onbrand:255 255 255;--c-tint:255 241 214;--c-danger:185 28 28}
-.dark{--c-brand:255 122 61;--c-brand-dark:255 170 120;--c-yolk:255 200 61;--c-muted:190 174 160;--c-ink:245 233 218;--c-card:42 29 23;--c-page:26 17 13;--c-onbrand:43 27 18;--c-tint:61 44 22;--c-danger:255 150 140;color-scheme:dark}
+:root{--c-brand:204 67 13;--c-brand-dark:166 58 10;--c-yolk:255 183 3;--c-muted:107 91 82;--c-ink:43 27 18;--c-card:255 255 255;--c-page:255 248 236;--c-onbrand:255 255 255;--c-tint:255 241 214;--c-danger:185 28 28;--c-hero:43 27 18}
+.dark{--c-brand:255 122 61;--c-brand-dark:255 170 120;--c-yolk:255 200 61;--c-muted:190 174 160;--c-ink:245 233 218;--c-card:42 29 23;--c-page:26 17 13;--c-onbrand:43 27 18;--c-tint:61 44 22;--c-danger:255 150 140;--c-hero:43 27 18;color-scheme:dark}
+[data-theme="mango"]{--c-brand:176 84 0;--c-brand-dark:125 58 0;--c-yolk:255 196 20;--c-muted:112 84 40;--c-ink:56 34 6;--c-card:255 255 255;--c-page:255 244 205;--c-onbrand:255 255 255;--c-tint:255 236 170;--c-danger:185 28 28;--c-hero:74 40 0}
+.dark[data-theme="mango"]{--c-brand:255 170 40;--c-brand-dark:255 205 120;--c-yolk:255 210 70;--c-muted:205 185 140;--c-ink:255 240 210;--c-card:44 32 10;--c-page:28 20 6;--c-onbrand:40 24 4;--c-tint:70 50 12;--c-danger:255 150 140;--c-hero:74 40 0;color-scheme:dark}
+[data-theme="rainy"]{--c-brand:29 78 216;--c-brand-dark:30 58 138;--c-yolk:56 189 248;--c-muted:84 103 125;--c-ink:15 31 51;--c-card:255 255 255;--c-page:238 245 252;--c-onbrand:255 255 255;--c-tint:219 234 254;--c-danger:185 28 28;--c-hero:15 35 70}
+.dark[data-theme="rainy"]{--c-brand:96 165 250;--c-brand-dark:147 197 253;--c-yolk:103 215 250;--c-muted:150 172 198;--c-ink:225 238 252;--c-card:18 30 48;--c-page:10 18 30;--c-onbrand:10 25 50;--c-tint:24 44 70;--c-danger:255 150 140;--c-hero:15 35 70;color-scheme:dark}
+[data-theme="pasko"]{--c-brand:185 28 28;--c-brand-dark:127 29 29;--c-yolk:250 204 21;--c-muted:110 85 85;--c-ink:40 20 20;--c-card:255 255 255;--c-page:255 249 245;--c-onbrand:255 255 255;--c-tint:254 226 226;--c-danger:185 28 28;--c-hero:20 64 40}
+.dark[data-theme="pasko"]{--c-brand:248 113 113;--c-brand-dark:252 165 165;--c-yolk:253 224 71;--c-muted:205 170 170;--c-ink:255 238 235;--c-card:40 22 24;--c-page:24 12 14;--c-onbrand:60 10 10;--c-tint:60 30 28;--c-danger:255 160 150;--c-hero:20 64 40;color-scheme:dark}
 .dark .recharts-text{fill:rgb(var(--c-muted))}
-body{@apply font-sans text-ink antialiased;background-color:rgb(var(--c-page));background-image:radial-gradient(900px 420px at 85% -80px,rgba(217,72,15,.08),transparent),radial-gradient(700px 360px at -10% 0,rgba(255,183,3,.16),transparent);background-repeat:no-repeat}
+body{@apply font-sans text-ink antialiased;background-color:rgb(var(--c-page));background-image:radial-gradient(900px 420px at 85% -80px,rgb(var(--c-brand) / .09),transparent),radial-gradient(700px 360px at -10% 0,rgb(var(--c-yolk) / .16),transparent);background-repeat:no-repeat}
 h1,h2,h3{letter-spacing:-.015em}
-::selection{background:rgba(217,72,15,.2)}
-:focus-visible{outline:3px solid #D9480F;outline-offset:2px}
+::selection{background:rgb(var(--c-brand) / .2)}
+:focus-visible{outline:3px solid rgb(var(--c-brand));outline-offset:2px}
 html{scroll-behavior:smooth}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes popIn{0%{transform:scale(.92);opacity:.4}60%{transform:scale(1.03)}100%{transform:scale(1);opacity:1}}
@@ -53,5 +59,5 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .cat-dance{animation:catDance .6s ease-in-out infinite}
 .cat-zzz{animation:zzz 2.4s ease-in-out infinite}
 @media (prefers-reduced-motion:reduce){.egg-overlay,.confetti,.yolk-dot{display:none}}
-.dark :focus-visible{outline-color:#FFAA78}
+.dark :focus-visible{outline-color:rgb(var(--c-brand-dark))}
 .dark .cat-bob svg{filter:drop-shadow(0 0 1px rgba(255,240,220,.95)) drop-shadow(0 0 3px rgba(255,240,220,.45))}
